@@ -28,14 +28,14 @@ var Indenter = function(source) {
     /* Defines differnt kinds of Tokens found in a C program. */
     /* Used a Enum */
     this.TOKEN_TYPE = {
-        CONSTANT  : { value: 0 },
-        KEYWORD   : { value: 1 },
-        IDENTIFIER: { value: 2 },
-        STRING    : { value: 3 },
-        CHARACTER : { value: 4 },
-        OPERATOR  : { value: 5 },
-        PUNCTUATOR: { value: 6 },
-        PREPROCESSOR: { value: 7 }
+        CONSTANT  : 0,
+        KEYWORD   : 1,
+        IDENTIFIER: 2,
+        STRING    : 3,
+        CHARACTER : 4,
+        OPERATOR  : 5,
+        PUNCTUATOR: 6,
+        PREPROCESSOR: 7
     };
 
     /* An array of all operators and punctuators found in C code */
@@ -240,51 +240,51 @@ var Indenter = function(source) {
      * source string which is a C program code
      */
     this.getNextToken = function() {
-        var token = new String();
         var rews = /\s/; // RegEx to check whitespace
 
         while (this.parseState.position < this.source.length) {
             var ch = this.source[this.parseState.position];
+            var token = {toString: function() { return this.value }};
             
             if (rews.test(ch)) {
                 // do nothing, its just a whitespace
             }
             else if (ch == '"') {
-                var token = this.readString(false);
+                token.value = this.readString(false);
                 token.type = this.TOKEN_TYPE.STRING;
                 return token;
             }
             else if (ch == "'") {
-                var token = this.readString(true);
+                token.value = this.readString(true);
                 token.type = this.TOKEN_TYPE.CHARACTER;
                 return token;
             }
             else if (ch != '#' && !this.checkOperatorStart(ch)) { 
                 if ("0123456789".indexOf(ch) == -1) {
-                    var token = this.readIdentifier();
+                    token.value = this.readIdentifier();
                     token.type = this.TOKEN_TYPE.IDENTIFIER;
                     return token;
                 }
                 else {
-                    var token = this.readNumber();
-                    token.type = this.TOKEN_TYPE.NUMBER;
+                    token.value = this.readNumber();
+                    token.type = this.TOKEN_TYPE.CONSTANT;
                     return token;
                 }
             }
             else if (ch == '#') {
-                var token = this.readTill('\n');
+                token.value = this.readTill('\n');
                 token.type = this.TOKEN_TYPE.PREPROCESSOR;
                 return token;
             }
             else if (this.checkOperatorStart(ch)) {
-                var token = this.readOperator();
+                token.value = this.readOperator();
                 token.type = this.TOKEN_TYPE.STRING;
                 return token;
             }
 
             ++this.parseState.position;
         }
-        return token;
+        return undefined;
     };
 
     /**
@@ -330,7 +330,7 @@ print("\nAFter running\n\n");
 
 while (true) {
     var y = x.getNextToken();
-    if (!y.length)
+    if (!y)
         break;
     else
         print(y);
