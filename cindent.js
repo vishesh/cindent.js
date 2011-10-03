@@ -10,18 +10,23 @@
  */
 
 var Indenter = function(source) {
+    /* Common settings and properties */
     this.language = "C";
     this.tabwidth = 4;
-    this.expandtabs = true;
+    this.expandtabs = true; // Use spaces or tabs
 
+    /* Defines the current parsing and indenting progress */
     this.parseState = {
-        position: 0,
-        depth: 0,
+        position: 0,      // Index in input
+        depth: 0,         // Depth during formatting
     };
 
-    this.source = source;
-    this.result = new String();
+    /* Source - Input and Output */
+    this.source = source;         // The input source code
+    this.result = new String();   // Prettified output
 
+    /* Defines differnt kinds of Tokens found in a C program. */
+    /* Used a Enum */
     this.TOKEN_TYPE = {
         CONSTANT  : { value: 0 },
         KEYWORD   : { value: 1 },
@@ -32,62 +37,71 @@ var Indenter = function(source) {
         PUNCTUATOR: { value: 6 }
     };
 
+    /* An array of all operators and punctuators found in C code */
+    /* Also contains the formatting information related to that token */
     this.TOKEN_VALUES = {
         /* Operators */
-        '+'  : { value: 0 },
-        '-'  : { value: 1 },
-        '/'  : { value: 2 },
-        '*'  : { value: 3 },
-        '%'  : { value: 4 },
-        '--' : { value: 5 },
-        '++' : { value: 6 },
+        '+'  : { value: 0, type: this.TOKEN_TYPE.OPERATOR},
+        '-'  : { value: 1, type: this.TOKEN_TYPE.OPERATOR },
+        '/'  : { value: 2, type: this.TOKEN_TYPE.OPERATOR },
+        '*'  : { value: 3, type: this.TOKEN_TYPE.OPERATOR },
+        '%'  : { value: 4, type: this.TOKEN_TYPE.OPERATOR },
+        '--' : { value: 5, type: this.TOKEN_TYPE.OPERATOR },
+        '++' : { value: 6, type: this.TOKEN_TYPE.OPERATOR },
         
-        '='  : { value: 7 },
-        '*=' : { value: 8 },
-        '/=' : { value: 9 },
-        '%=' : { value: 10 },
-        '+=' : { value: 11 },
-        '-=' : { value: 12 },
-        '<<=': { value: 13 },
-        '>>=': { value: 14 },
-        '&=' : { value: 15 },
-        '^=' : { value: 16 },
-        '|=' : { value: 17 },
+        '='  : { value: 7, type: this.TOKEN_TYPE.OPERATOR },
+        '*=' : { value: 8, type: this.TOKEN_TYPE.OPERATOR },
+        '/=' : { value: 9, type: this.TOKEN_TYPE.OPERATOR },
+        '%=' : { value: 10, type: this.TOKEN_TYPE.OPERATOR },
+        '+=' : { value: 11, type: this.TOKEN_TYPE.OPERATOR },
+        '-=' : { value: 12, type: this.TOKEN_TYPE.OPERATOR },
+        '<<=': { value: 13, type: this.TOKEN_TYPE.OPERATOR },
+        '>>=': { value: 14, type: this.TOKEN_TYPE.OPERATOR },
+        '&=' : { value: 15, type: this.TOKEN_TYPE.OPERATOR },
+        '^=' : { value: 16, type: this.TOKEN_TYPE.OPERATOR },
+        '|=' : { value: 17, type: this.TOKEN_TYPE.OPERATOR },
 
-        '==' : { value: 18 },
-        '!=' : { value: 19 },
-        '>'  : { value: 20 },
-        '='  : { value: 21 },
-        '<=' : { value: 22 },
-        '>=' : { value: 23 },
-        '||' : { value: 24 },
-        '&&' : { value: 25 },
-        '!'  : { value: 26 },
+        '==' : { value: 18, type: this.TOKEN_TYPE.OPERATOR },
+        '!=' : { value: 19, type: this.TOKEN_TYPE.OPERATOR },
+        '>'  : { value: 20, type: this.TOKEN_TYPE.OPERATOR },
+        '='  : { value: 21, type: this.TOKEN_TYPE.OPERATOR },
+        '<=' : { value: 22, type: this.TOKEN_TYPE.OPERATOR },
+        '>=' : { value: 23, type: this.TOKEN_TYPE.OPERATOR },
+        '||' : { value: 24, type: this.TOKEN_TYPE.OPERATOR },
+        '&&' : { value: 25, type: this.TOKEN_TYPE.OPERATOR },
+        '!'  : { value: 26, type: this.TOKEN_TYPE.OPERATOR },
         
-        '&'  : { value: 27 },
-        '|'  : { value: 28 },
-        '^'  : { value: 29 },
-        '<<' : { value: 30 },
-        '>>' : { value: 31 },
-        '~'  : { value: 32 },
+        '&'  : { value: 27, type: this.TOKEN_TYPE.OPERATOR },
+        '|'  : { value: 28, type: this.TOKEN_TYPE.OPERATOR },
+        '^'  : { value: 29, type: this.TOKEN_TYPE.OPERATOR },
+        '<<' : { value: 30, type: this.TOKEN_TYPE.OPERATOR },
+        '>>' : { value: 31, type: this.TOKEN_TYPE.OPERATOR },
+        '~'  : { value: 32, type: this.TOKEN_TYPE.OPERATOR },
 
-        ':'  : { value: 33 },
-        '?'  : { value: 34 },
+        ':'  : { value: 33, type: this.TOKEN_TYPE.OPERATOR },
+        '?'  : { value: 34, type: this.TOKEN_TYPE.OPERATOR },
 
-        'sizeof': { value: 35 },
+        'sizeof': { value: 35, type: this.TOKEN_TYPE.OPERATOR },
 
         /* Punctuators */
         
-        ','  : { value: 36 },
-        '{'  : { value: 37 },
-        '}'  : { value: 38 },
-        '['  : { value: 39 },
-        ']'  : { value: 40 },
-        '('  : { value: 41 },
-        ')'  : { value: 42 },
-        ';'  : { value: 42 }
+        ','  : { value: 36, type: this.TOKEN_TYPE.PUNCTUATOR },
+        '{'  : { value: 37, type: this.TOKEN_TYPE.PUNCTUATOR },
+        '}'  : { value: 38, type: this.TOKEN_TYPE.PUNCTUATOR },
+        '['  : { value: 39, type: this.TOKEN_TYPE.PUNCTUATOR },
+        ']'  : { value: 40, type: this.TOKEN_TYPE.PUNCTUATOR },
+        '('  : { value: 41, type: this.TOKEN_TYPE.PUNCTUATOR },
+        ')'  : { value: 42, type: this.TOKEN_TYPE.PUNCTUATOR },
+        ';'  : { value: 42, type: this.TOKEN_TYPE.PUNCTUATOR }
     };
 
+    /**
+     * Check if this is an operator or can expect a full opearator 
+     * 
+     * @param tempToken A character which check whether its an operator, or
+     *                  there exists an operator which starts with it
+     * @returns true if match found, otherwise false
+     */
     this.checkOperatorStart = function(tempToken) {
         for (var key in this.TOKEN_VALUES) {
             if (tempToken == key[0]) {
@@ -97,25 +111,35 @@ var Indenter = function(source) {
         return false;
     };
 
+    /* Read the operator token from the input, given the fact that current
+     * position is at operator. Uses the big list above to compare and find
+     *
+     * @returns A string containg the token value
+     */
     this.readOperator = function() {
         var token = new String();
-        var initpos = this.parseState.position;
+        var initpos = this.parseState.position; // save initial index
         var ch = this.source[this.parseState.position++];
-        //print("ch = " + ch);
 
         token += ch;
+        // read next input character, combine with token and check if it is
+        // an operator. Is required to handle cases like '=' and '==' where
+        // a part of second can act an independent operator.
         while (this.parseState.position < this.source.length) {
             var tempch = this.source[this.parseState.position++];
             var temptoken = token + tempch;
-            var found = false;
+            var found = false; // whether a match was found in current iteration
 
+            // Match with each token in TOKEN_VALUES array above
             for (var key in this.TOKEN_VALUES) {
                 if (key.substring(0, temptoken.length) == temptoken) {
-                    found = true;
+                    found = true; // iteration found
                     token = temptoken;
                 }
             }
 
+            // not found any match in current iteration. Hence cant expect in 
+            // next iteration as well. 
             if (!found)
                 break;
         }
@@ -123,6 +147,12 @@ var Indenter = function(source) {
         return token;
     }
 
+    /**
+     * Read a String or Character literal
+     *
+     * @param isChar Reading String or Character
+     * @returns String containing the token value
+     */
     this.readString = function(isChar) {
         var lookout;
         var token = new String();
@@ -146,6 +176,11 @@ var Indenter = function(source) {
         return token;   
     }
 
+    /**
+     * Read an identifier token.
+     *
+     * @returns A string containg the token value
+     */
     this.readIdentifier = function() {
         var patt = "abcdefghijklmnopqrstuvwxyz" +
                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
@@ -164,6 +199,13 @@ var Indenter = function(source) {
         return token;
     }
 
+    /**
+     * Read from input and increase position counter until CHARACTER
+     * 'till' is read.
+     *
+     * @returns The string formed by concatenating all read characters.
+     *
+     */
     this.readTill = function(till) {
         var token = new String();
         while (this.parseState.position < this.source.length) {
@@ -176,6 +218,10 @@ var Indenter = function(source) {
         return token;
     }
 
+    /**
+     * Higher level function, which returns the next token from the input
+     * source string which is a C program code
+     */
     this.getNextToken = function() {
         var token = new String();
         var rews = /\s/; // RegEx to check whitespace
@@ -184,7 +230,7 @@ var Indenter = function(source) {
             var ch = this.source[this.parseState.position];
             
             if (rews.test(ch)) {
-                // do nothing
+                // do nothing, its just a whitespace
             }
             else if (ch == '"') {
                 return readString(false);
@@ -192,7 +238,7 @@ var Indenter = function(source) {
             else if (ch == "'") {
                 return readString(true);
             }
-            else if (ch != '#' && !this.checkOperatorStart(ch)) {
+            else if (ch != '#' && !this.checkOperatorStart(ch)) { 
                 return readIdentifier();
             }
             else if (ch == '#') {
@@ -207,6 +253,13 @@ var Indenter = function(source) {
         return token;
     };
 
+    /**
+     * Returns a string containg the required whitespaces to indent a 
+     * line a level/depth 'n'
+     *
+     * @param n Depth of the line which is supposed to Indenter
+     * @return A string containing whitespace(space or tabs) to indent line
+     */
     this.getIndentString = function(n) {
         var str = new String();
         for (i = 0; i < n; i++) {
@@ -222,6 +275,9 @@ var Indenter = function(source) {
         return str;
     };
 
+    /**
+     * Prettifies the input source - C program code 
+     **/
     this.prettify = function() {
         
     };
@@ -229,6 +285,9 @@ var Indenter = function(source) {
     return this;
 }
 
+/************************
+ *      Test Code       *
+ ************************/
 
 var s = "#include <stdio.h>\nconst int x = 5>=4;int main(){char *name=\"Vishesh\";char ch='a';return 0;}";
 var x = Indenter(s);
