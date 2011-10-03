@@ -1,0 +1,24 @@
+cindent-js
+==========
+
+cindent-js is a C source code formatter, indenter and beautifier. This is at its
+very early stage (not even in working state, while writing this README).
+
+There are many good and mature projects which does this job much better.
+However, I couldn't find any one which was based on JavaScript. The reason I was
+looking for something in JavaScript was - 
+
+    - It can be used in applications which embed JavaScript engines.
+    - I can make a web application which can use this to indent C source code at
+      client side, hence removing the overhead at server.
+
+I've previous zero experience with JavaScript and lexical analysis, yet I chose
+this only for the sake of being able to put it in web page and people
+(particularly my college friends) benefit from it anytime, anywhere.
+
+You can find latest version of this project at
+   - http://github.com/vishesh/cindent-js
+
+Feel free to send me suggestions, feedbacks, bugs or anything. :-)
+
+This project is under BSD License. See COPYING for more info regarding this.
