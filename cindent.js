@@ -34,7 +34,8 @@ var Indenter = function(source) {
         STRING    : { value: 3 },
         CHARACTER : { value: 4 },
         OPERATOR  : { value: 5 },
-        PUNCTUATOR: { value: 6 }
+        PUNCTUATOR: { value: 6 },
+        PREPROCESSOR: { value: 7 }
     };
 
     /* An array of all operators and punctuators found in C code */
@@ -199,6 +200,22 @@ var Indenter = function(source) {
         return token;
     }
 
+    this.readNumber = function() {
+        var patt = "0123456789.flL";
+        var token = new String();
+
+        while (this.parseState.position < this.source.length) {
+            var ch = this.source[this.parseState.position++];
+            if (patt.indexOf(ch) == -1) {
+                --this.parseState.position;
+                break;
+            }
+            token += ch;
+        }
+        
+        return token;
+    }
+
     /**
      * Read from input and increase position counter until CHARACTER
      * 'till' is read.
@@ -233,19 +250,36 @@ var Indenter = function(source) {
                 // do nothing, its just a whitespace
             }
             else if (ch == '"') {
-                return readString(false);
+                var token = this.readString(false);
+                token.type = this.TOKEN_TYPE.STRING;
+                return token;
             }
             else if (ch == "'") {
-                return readString(true);
+                var token = this.readString(true);
+                token.type = this.TOKEN_TYPE.CHARACTER;
+                return token;
             }
             else if (ch != '#' && !this.checkOperatorStart(ch)) { 
-                return readIdentifier();
+                if ("0123456789".indexOf(ch) == -1) {
+                    var token = this.readIdentifier();
+                    token.type = this.TOKEN_TYPE.IDENTIFIER;
+                    return token;
+                }
+                else {
+                    var token = this.readNumber();
+                    token.type = this.TOKEN_TYPE.NUMBER;
+                    return token;
+                }
             }
             else if (ch == '#') {
-                return readTill('\n');
+                var token = this.readTill('\n');
+                token.type = this.TOKEN_TYPE.PREPROCESSOR;
+                return token;
             }
             else if (this.checkOperatorStart(ch)) {
-                return readOperator();
+                var token = this.readOperator();
+                token.type = this.TOKEN_TYPE.STRING;
+                return token;
             }
 
             ++this.parseState.position;
@@ -289,8 +323,8 @@ var Indenter = function(source) {
  *      Test Code       *
  ************************/
 
-var s = "#include <stdio.h>\nconst int x = 5>=4;int main(){char *name=\"Vishesh\";char ch='a';return 0;}";
-var x = Indenter(s);
+var s = "#include <stdio.h>\nconst int x = 5>=4.5;int main(){char *name=\"Vishesh\";char ch='a';return 0;}";
+var x = new Indenter(s);
 
 print("\nAFter running\n\n");
 
