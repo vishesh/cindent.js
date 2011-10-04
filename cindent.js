@@ -321,7 +321,39 @@ var Indenter = function(source) {
                 break;
 
             if (token.type == this.TOKEN_TYPE.PREPROCESSOR) {
-                this.result += token.value;
+                this.result += token.value + '\n';
+            }
+            else if (token) {
+                var line = "";
+                
+                while (token) {
+                    if (token.value == '{') {
+                        line += ' ' + token.value + '\n';
+                        this.result += this.getIndentString(this.parseState.depth);
+                        this.result += line;
+                        ++this.parseState.depth;
+                        break;
+                    }
+                    else if (token.value == ';') {
+                        line += token.value + '\n';
+                        this.result += this.getIndentString(this.parseState.depth);
+                        this.result += line;
+                        break;
+                    }
+                    else if (token.value == '}') {
+                        line += this.getIndentString(--this.parseState.depth);
+                        line += token.value + '\n';
+                        this.result += line;
+                        break;
+                    }
+                    else {
+                        if (line.length)
+                            line += ' ';
+                        line += token;
+                    }
+
+                    token = this.getNextToken();
+                }
             }
         }
 
@@ -335,10 +367,10 @@ var Indenter = function(source) {
  *      Test Code       *
  ************************/
 
-var s = "#include <stdio.h>\nconst int x = 5>=4.5;int main(){char *name=\"Vishesh\";char ch='a';return 0;}";
+var s = "#include<sf>\n#include <stdio.h>\nconst int x = 5>=4.5;int main(){char *name=\"Vishesh\";char ch='a';while(true){printf(\"hello\");while(true){}}return 0;}";
 var x = new Indenter(s);
 
-print("\nAFter running\n\n");
+print("\nAFter running - ");
 var result = x.prettify();
 
 print(result);
