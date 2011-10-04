@@ -325,6 +325,7 @@ var Indenter = function(source) {
             }
             else if (token) {
                 var line = "";
+                var insideParan = false;
                 
                 while (token) {
                     if (token.value == '{') {
@@ -334,11 +335,24 @@ var Indenter = function(source) {
                         ++this.parseState.depth;
                         break;
                     }
+                    else if (token.value == '(') {
+                        insideParan = true;
+                        line += token.value;
+                    }
+                    else if (token.value == ')') {
+                        insideParan = false;
+                        line += token.value;
+                    }
                     else if (token.value == ';') {
-                        line += token.value + '\n';
-                        this.result += this.getIndentString(this.parseState.depth);
-                        this.result += line;
-                        break;
+                        if (!insideParan) {
+                            line += token.value + '\n';
+                            this.result += this.getIndentString(this.parseState.depth);
+                            this.result += line;
+                            break;
+                        }
+                        else {
+                            line += token.value;
+                        }
                     }
                     else if (token.value == '}') {
                         line += this.getIndentString(--this.parseState.depth);
@@ -366,11 +380,11 @@ var Indenter = function(source) {
 /************************
  *      Test Code       *
  ************************/
-
+/***
 var s = "#include<sf>\n#include <stdio.h>\nconst int x = 5>=4.5;int main(){char *name=\"Vishesh\";char ch='a';while(true){printf(\"hello\");while(true){}}return 0;}";
 var x = new Indenter(s);
 
 print("\nAFter running - ");
 var result = x.prettify();
 
-print(result);
+print(result);**/
