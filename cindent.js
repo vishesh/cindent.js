@@ -313,7 +313,15 @@ var Indenter = function(source) {
      * Prettifies the input source - C program code 
      **/
     this.prettify = function() {
+        var result = "";
         
+        var lastPreprocessor = false;
+
+        while (true) {
+            var token = this.getNextToken();
+            if (!token)
+                break;
+        return result;
     };
 
     return this;
@@ -327,13 +335,6 @@ var s = "#include <stdio.h>\nconst int x = 5>=4.5;int main(){char *name=\"Vishes
 var x = new Indenter(s);
 
 print("\nAFter running\n\n");
+var result = x.prettify();
 
-while (true) {
-    var y = x.getNextToken();
-    if (!y)
-        break;
-    else
-        print(y);
-}
-
-
+print(result);
