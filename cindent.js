@@ -307,21 +307,25 @@ var Indenter = function(source) {
             }
         }
         return str;
-    };
+    }
 
     /**
      * Prettifies the input source - C program code 
      **/
     this.prettify = function() {
-        var result = "";
+        this.result = "";
         
-        var lastPreprocessor = false;
-
         while (true) {
             var token = this.getNextToken();
             if (!token)
                 break;
-        return result;
+
+            if (token.type == this.TOKEN_TYPE.PREPROCESSOR) {
+                this.result += token.value;
+            }
+        }
+
+        return this.result;
     };
 
     return this;
