@@ -21,6 +21,9 @@ var Indenter = function(source) {
         depth: 0,         // Depth during formatting
     };
 
+    this.indentoptions = {
+    };
+
     /* Source - Input and Output */
     this.source = source;         // The input source code
     this.result = new String();   // Prettified output
@@ -81,8 +84,7 @@ var Indenter = function(source) {
 
         ':'  : { value: 33, type: this.TOKEN_TYPE.OPERATOR },
         '?'  : { value: 34, type: this.TOKEN_TYPE.OPERATOR },
-
-        'sizeof': { value: 35, type: this.TOKEN_TYPE.OPERATOR },
+        // skipping sizeof :|
 
         /* Punctuators */
         
@@ -329,6 +331,9 @@ var Indenter = function(source) {
                 
                 while (token) {
                     if (token.value == '{') {
+                        if (line.search("else") == 0) {
+                            // do something to remove previous newline
+                        }
                         line += ' ' + token.value + '\n';
                         this.result += this.getIndentString(this.parseState.depth);
                         this.result += line;
@@ -337,6 +342,9 @@ var Indenter = function(source) {
                     }
                     else if (token.value == '(') {
                         insideParan = true;
+                        line += token.value;
+                    }
+                    else if (token.value == '[') {
                         line += token.value;
                     }
                     else if (token.value == ')') {
@@ -356,12 +364,14 @@ var Indenter = function(source) {
                     }
                     else if (token.value == '}') {
                         line += this.getIndentString(--this.parseState.depth);
-                        line += token.value + '\n';
+                        line += token.value + '\n\n';
                         this.result += line;
                         break;
                     }
                     else {
-                        if (line.length)
+                        if (line.length && token != "++" && token != "--" &&
+                                line[line.length-1] != '(' && token != ',' &&
+                                line[line.length-1] != '[' && token != ']')
                             line += ' ';
                         line += token;
                     }
